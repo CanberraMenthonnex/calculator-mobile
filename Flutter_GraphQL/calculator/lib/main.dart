@@ -8,16 +8,70 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Calculatrice',
-      theme: ThemeData(
-        primaryColor: AppColors.inputContainerBackground,
-        accentColor: AppColors.displayContainerBackground,
-        primaryColorBrightness: Brightness.light,
+    return GraphQLProvider(
+      client: ValueNotifier(GraphQLClient(
+          link: HttpLink(
+              'https://damp-waterfall.eu-central-1.aws.cloud.dgraph.io/graphql'),
+          cache: GraphQLCache())),
+      child: MaterialApp(
+        title: 'Pokédex',
+        theme: ThemeData(
+          primaryColor: AppColors.inputContainerBackground,
+          accentColor: AppColors.displayContainerBackground,
+          primaryColorBrightness: Brightness.light,
+        ),
+        home: Pokedex(),
       ),
-      home: Calculator(),
     );
   }
+}
+
+
+
+class Pokedex extends StatelessWidget {
+ @override
+ Widget build(BuildContext context) {
+   return Query(
+       options: QueryOptions(document: gql('''
+        query MyQuery {
+        queryPokemon {
+          id
+          name
+        }
+        }
+              ''')),
+       builder: (QueryResult result,
+           {Refetch? refetch, FetchMore? fetchMore}) {
+         if (result.hasException) {
+           return Text('Error');
+         } else if (result.isLoading) {
+           return Text('Loading');
+         }
+
+         List pokemons = (result.data as Map)['queryPokemon'] as List;
+
+         return Scaffold(
+           body: ListView.builder(
+             itemBuilder: (BuildContext context, int position) {
+               var pokemon = pokemons[position];
+
+               return GraphQLConsumer(
+                 builder: (GraphQLClient client) {
+                   return ListTile(
+                     leading: CircleAvatar(
+                       child: Image.network(pokemon['imgUrl']),
+                       backgroundColor: AppColors.white,
+                     ),
+                     title: Text(pokemon['name']),
+                   );
+                 },
+               );
+             },
+             itemCount: pokemons.length,
+           ),
+         );
+       });
+ }
 }
 
 class Calculator extends StatefulWidget {
