@@ -21,7 +21,10 @@ class ReactCalculator extends Component {
           previousInputValue: 0,
           inputValue: 0,
           selectedSymbol: null,
-          decimal: false,
+
+          decimal: null,
+          
+          inc: 1,
       }
     }
 
@@ -58,11 +61,29 @@ class ReactCalculator extends Component {
 }
 
   _handleNumberInput(num) {
-    let inputValue = (this.state.inputValue * 10) + num;
+    let inputValue = null,
+    inc = this.state.inc;
+
+    if (this.state.decimal != '.') {
+      inputValue = (this.state.inputValue * 10) + num;
+    }else{
+      inputValue = this.state.inputValue + this._handleNumberInputToDecimal(num, inc);
+      inc++;
+    }
 
     this.setState({
         inputValue: inputValue,
+        inc: inc
     })
+  }
+
+
+  _handleNumberInputToDecimal(num, inc){
+    while(inc > 0){
+      num = num /10;
+      inc--;
+    }
+    return num;
   }
 
   _handleStringInput(str) {
@@ -74,7 +95,9 @@ class ReactCalculator extends Component {
             this.setState({
                 selectedSymbol: str,
                 previousInputValue: this.state.inputValue,
-                inputValue: 0
+                inputValue: 0,
+                decimal: null,
+                compteur: 1,
             });
         break;
         case '=':
@@ -89,25 +112,34 @@ class ReactCalculator extends Component {
             this.setState({
                 previousInputValue: 0,
                 inputValue: eval(previousInputValue + symbol + inputValue),
-                selectedSymbol: null
+                selectedSymbol: null,
+                decimal:null,
+                compteur: 1
             });
             console.log()
         break;
         case 'ce':
             this.setState({
-              inputValue: 0
+              inputValue: 0,
+              
+              compteur: 1,
+              decimal:null,
             });
         break;
         case 'c':
           let TruncateValue = Math.trunc(this.state.inputValue /10);
           this.setState({
-            inputValue: TruncateValue
+            inputValue: TruncateValue,
+            strSymbol: null,
+            compteur: 1
           });
         break;
         case '.':
           this.setState({
-            decimal: true
-          })
+            decimal: '.',
+            
+            compteur: 1
+          });
         break;
     }
   }
